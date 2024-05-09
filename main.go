@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"slices"
+	"strings"
 )
 
 type apiConfig struct {
@@ -42,7 +44,7 @@ func handlerChirpsValidate(w http.ResponseWriter, r *http.Request) {
 		Body string `json:"body"`
 	}
 	type returnVals struct {
-		Valid bool `json:"valid"`
+		CleanedBody string `json:"cleaned_body"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -59,9 +61,7 @@ func handlerChirpsValidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, returnVals{
-		Valid: true,
-	})
+	respondWithJSON(w, http.StatusOK, returnVals{CleanedBody: cleanBody(params.Body)})
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {
@@ -86,4 +86,16 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	}
 	w.WriteHeader(code)
 	w.Write(dat)
+}
+
+func cleanBody(body string) string {
+	swearWords := []string{"kerfuffle", "sharbert", "fornax"}
+	var temp []string
+	for _, word := range strings.Split(body, " ") {
+		if slices.Contains(swearWords, strings.ToLower(word)) {
+			word = "****"
+		}
+		temp = append(temp, word)
+	}
+	return strings.Join(temp, " ")
 }
